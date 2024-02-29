@@ -2,88 +2,94 @@
 #include <stdio.h>
 #include <string.h>
 
+
+
 #define bool int
 #define false 0
 #define true 1
-const int maxNameSize = 2000;
 
-typedef struct subspecies {
+const int maxNameSize = 100;
+const int numOfAnimals = 156;
+char filenameZoologist[] = "ZoologistAnimalsRDR2.csv";
 
-    char name[1000];
-    bool isFound;
+typedef struct animal {
+
+    
+    bool isStudied;
     bool isSkinned;
+    char* name;
 
-} subspecies;
+} animal;
 
 
-typedef struct species {
-    char name[10];
-    subspecies subname[]; //Amount of subspecies under a species is dynamic. Implement dynamic array
+FILE* openReadFile(char filename[]); //Opens the file I may need to open (i.e. Zoologist & Skinnable lists)
 
-} species; 
+int numOfEntries(char filename[]); //Finds the number of entries in a list
+
+animal** createAnimalList(int numEntries, char filename[]); 
+/*Dynamically allocates memory to make an array of structs with strings in them
+
+
+ Pointer to an array of pointers which points to a struct. The struct contains a pointer to a string array.
+   ptr -> [ nameptr ][ nameptr ][ nameptr ][ nameptr ][ nameptr ]
+              |        |           |          |          |   
+           [][][][]  [][][]      [][][]     [][][]     [][][]
+*/
+
+
+void freeAnimalList(int numEntries, animal** animalList); 
+//Frees the string, then the struct, then the ptr to the array of structs
+
+int nameLength(char animalName[]); //Returns the length of a name when called
 
 int main()
-{
-    
-   species speciesNames[80];
-    
-    FILE *filepoint = NULL;
+{    
+    FILE *filepointZoologist = NULL;
 
-   filepoint = fopen("AllAnimalsRDR2CSV.csv", "r");
+    int numZooEntries = numOfEntries(filenameZoologist);
 
-   if(filepoint == NULL) //Error openining file, make sure its opening correctly or in place.
-   {
-    printf("Error opening file.\n");
-    exit(1);
-   }
+    filepointZoologist = openReadFile(filenameZoologist);
+
+    animal** animalListZoologist = NULL; //Points to a pointer (the)
     
-    int indexSpecies = 0;
+    animalListZoologist = createAnimalList(numZooEntries, filenameZoologist);
+
+
+
+    int index = 0;
     
     char tempName[maxNameSize] ;
-    char* fileSpeciesName = NULL;
-    char* fileSubspeciesName = NULL;
+    char* fileAnimalName = NULL;
+   
 
-   while(!feof(filepoint)) //While it is not the end of the csv file, it will keep reading until it is
+   while(!feof(filepointZoologist)) //While it is not the end of the csv file, it will keep reading until it is
    {
-        int indexSubSp = 0;
      
-        if(fgets(tempName, maxNameSize, filepoint) != NULL)
+        if(fgets(tempName, maxNameSize, filepointZoologist) != NULL)
         {
-            fileSpeciesName = strtok(tempName, ",");
 
-            strcpy(speciesNames[indexSpecies].name, fileSpeciesName);
+            strcpy(animalListZoologist[index]->name, tempName);
 
-            fileSubspeciesName = strtok(NULL, ",");
-
-            while(fileSubspeciesName != NULL){
-                printf("hey\n\n");
-                strcpy(speciesNames[indexSpecies].subname[indexSubSp].name, fileSubspeciesName);
-                printf("%s index- %d \n", speciesNames[indexSpecies].subname[indexSubSp].name, indexSubSp);
-                indexSubSp++;
-                fileSubspeciesName = strtok(NULL, ",");
-            };
-
-            indexSpecies++;
+            printf("Row %d: %s\n", index + 1, animalListZoologist[index]->name);
+            
+            index++;          
             
         }
-
-     
    }
 
+   fclose(filepointZoologist);
+
+   /*for(int i = 0; i < numOfAnimals; i++)
+   {
     
-    for(int i = 0; i < 79; i++)
-    {
-        printf("Row %d: %s\n", i + 1, speciesNames[i].name);
-    }
 
 
-    printf("sizeof ,: %d", sizeof(","));
+   }
 
 
 
 
-
-   /*
+   
     int choice = 3;
 
     while(choice == 3){
@@ -124,15 +130,93 @@ int main()
     }
     */
 
-
+    freeAnimalList(numOfAnimals, animalListZoologist);
+ 
     return 0;
 }
 
 
+FILE* openReadFile(char filename[])
+{
+    FILE *filepoint = NULL;
 
-/* char** createTable(){
+   filepoint = fopen(filename, "r");
 
-    char* speciesNames = malloc(80)
+   if(filepoint == NULL) //Error openining file, make sure its opening correctly or in place.
+   {
+    perror("Error opening file.\n");
+    exit(1);
+   }
+    
+    
+
+    return filepoint;
 
 }
-*/
+
+int numOfEntries(char filename[])
+{
+
+    FILE* filepoint = openReadFile(filename);
+
+    int i = 0;
+
+   while(!feof(filepoint)) //While it is not the end of the csv file, it will keep reading until it is
+   {
+       
+
+    char tempName[100];
+
+        if(fgets(tempName, maxNameSize, filepoint) != NULL)  
+        {
+            i++;
+        }
+
+   }
+
+    fclose(filepoint);
+
+    return i;
+
+}
+
+
+animal** createAnimalList(int numEntries, char filename[])
+{
+    animal** animalListPtr = NULL;
+
+    animalListPtr = (animal**)malloc(numEntries * sizeof(animal*));
+
+    for(int i = 0; i < numEntries; i++)
+    {
+        animalListPtr[i] = malloc(sizeof(animal));
+        animalListPtr[i]->isSkinned = 0;
+        animalListPtr[i]->isStudied = 0;
+       animalListPtr[i]->name = malloc(sizeof(nameLength(filename) + 1)); 
+    }
+
+    return animalListPtr;
+}
+
+void freeAnimalList(int numEntries, animal** animalList)
+{
+    animal* animallistptr;
+    for(int i = numEntries; i > -1; i--)
+    {
+         printf("hey\n");
+        free(animalList[i]->name);
+        animallistptr = animalList[i];
+        printf("%s", animallistptr);
+    
+        free(animalList[i]);
+         
+    }
+
+    free(animalList);
+
+}
+
+int nameLength(char animalName[])
+{
+    return (strlen(animalName));
+}
